@@ -1,14 +1,13 @@
-package de.lm.proxysync.ressources;
+package de.lm.proxysync.resources;
 
 import de.lm.proxysync.services.DatabaseService;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Path("/ignoredpaths")
-public class StatusRessource {
+public class IgnoredPathResource {
 
     @Inject
     DatabaseService databaseService;

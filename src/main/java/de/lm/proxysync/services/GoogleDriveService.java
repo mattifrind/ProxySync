@@ -22,6 +22,7 @@ import io.quarkus.runtime.StartupEvent;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
+import javax.inject.Inject;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +35,9 @@ import java.util.List;
 @ApplicationScoped
 @Startup
 public class GoogleDriveService {
+
+    @Inject StatusService statusService;
+
     /** Application name. */
     private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
     /** Global instance of the JSON factory. */
@@ -54,10 +58,11 @@ public class GoogleDriveService {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
         InputStream in = GoogleDriveService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
+            statusService.addError("Get Drive Credentials failed");
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
@@ -69,9 +74,8 @@ public class GoogleDriveService {
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
         //returns an authorized Credential object.
-        return credential;
+        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
     public void initGoogleDrive() throws IOException, GeneralSecurityException {
@@ -80,6 +84,7 @@ public class GoogleDriveService {
         Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+        statusService.setDriveWorking(true);
 
         // Print the names and IDs for up to 10 files.
         FileList result = service.files().list()
