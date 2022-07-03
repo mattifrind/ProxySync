@@ -17,6 +17,8 @@ bin/
 *.iml
 *.iws
 
+**/tokens/
+
 # NetBeans
 nb-configuration.xml
 

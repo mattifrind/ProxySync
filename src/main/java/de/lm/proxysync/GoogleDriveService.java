@@ -146,8 +146,7 @@ public class GoogleDriveService {
 
 
     void onStart(@Observes StartupEvent ev) throws IOException, GeneralSecurityException {
-        System.out.println("The application is starting...");
-        initGoogleDrive();
+        //initGoogleDrive();
         //uploadBasic();
     }
 }
