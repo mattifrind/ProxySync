@@ -17,8 +17,6 @@ bin/
 *.iml
 *.iws
 
-**/tokens/
-
 # NetBeans
 nb-configuration.xml
 
@@ -39,3 +37,4 @@ nb-configuration.xml
 
 # Local environment
 .env
+/tokens/
