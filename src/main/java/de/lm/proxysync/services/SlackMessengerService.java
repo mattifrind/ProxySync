@@ -1,4 +1,4 @@
-package de.lm.proxysync;
+package de.lm.proxysync.services;
 
 import com.slack.api.Slack;
 import com.slack.api.methods.SlackApiException;
@@ -51,9 +51,9 @@ public class SlackMessengerService {
         }
     }
 
-    public void sendMessageForNewProject(String projectName) {
+    public void sendMessageForNewProject(String projectName, int filesCount) {
         String NEW_PROJECT_PRE_TEXT = ":neu: Uploaded new project";
-        sendMessage(NEW_PROJECT_PRE_TEXT + " \"" + projectName + "\"");
+        //sendMessage(NEW_PROJECT_PRE_TEXT + " \"" + projectName + "\" with " + filesCount + " files.");
     }
 
     public void onStart(@Observes StartupEvent ev) {

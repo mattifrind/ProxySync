@@ -1,9 +1,9 @@
-package de.lm.proxysync;
+package de.lm.proxysync.services;
 
 import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class ProxyUploader {
+public class ProxyUploaderService {
 
     public void uploadProxies()
     {
