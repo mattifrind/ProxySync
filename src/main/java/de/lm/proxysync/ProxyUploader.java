@@ -9,6 +9,5 @@ public class ProxyUploader {
     {
         //TODO: Scanning
         //TODO: Uploading
-        System.out.println("Upload!");
     }
 }

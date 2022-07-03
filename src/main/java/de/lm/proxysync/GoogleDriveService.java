@@ -6,6 +6,8 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.FileContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -14,16 +16,35 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import io.quarkus.runtime.Startup;
+import io.quarkus.runtime.StartupEvent;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.FileContent;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.File;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
+
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 /* class to demonstarte use of Drive files list API */
+@ApplicationScoped
+@Startup
 public class GoogleDriveService {
     /** Application name. */
     private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
@@ -37,7 +58,7 @@ public class GoogleDriveService {
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_METADATA_READONLY);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+    private static final String CREDENTIALS_FILE_PATH = "/credentials/credentials.json";
 
     /**
      * Creates an authorized Credential object.
@@ -47,7 +68,7 @@ public class GoogleDriveService {
      */
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
-        InputStream in = DriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        InputStream in = GoogleDriveService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
@@ -65,7 +86,7 @@ public class GoogleDriveService {
         return credential;
     }
 
-    public static void main(String... args) throws IOException, GeneralSecurityException {
+    public void initGoogleDrive() throws IOException, GeneralSecurityException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
@@ -87,4 +108,47 @@ public class GoogleDriveService {
             }
         }
     }
+
+    public void uploadBasic() throws IOException, GeneralSecurityException {
+        // Load pre-authorized user credentials from the environment.
+        // TODO(developer) - See https://developers.google.com/identity for
+        // guides on implementing OAuth2 for your application.
+
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        Drive service = new Drive.Builder(HTTP_TRANSPORT,
+                JSON_FACTORY,
+                getCredentials(HTTP_TRANSPORT))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+
+
+        // Upload file photo.jpg on drive.
+        File fileMetadata = new File();
+        fileMetadata.setName("rothograpf.jpg");
+        // File's content.
+        java.io.File filePath = new java.io.File("D:\\Downloads\\rothograpf.jpeg");
+        // Specify media type and file-path for file.
+        FileContent mediaContent = new FileContent("image/jpeg", filePath);
+        try {
+            File file = service.files().create(fileMetadata, mediaContent)
+                    .setFields("id")
+                    .execute();
+            System.out.println("File ID: " + file.getId());
+            //return file.getId();
+            return;
+        }catch (GoogleJsonResponseException e) {
+            // TODO(developer) - handle error appropriately
+            System.err.println("Unable to upload file: " + e.getDetails());
+            throw e;
+        }
+    }
+
+
+
+    void onStart(@Observes StartupEvent ev) throws IOException, GeneralSecurityException {
+        System.out.println("The application is starting...");
+        initGoogleDrive();
+        //uploadBasic();
+    }
 }
+
