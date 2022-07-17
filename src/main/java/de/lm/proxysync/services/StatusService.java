@@ -1,6 +1,7 @@
 package de.lm.proxysync.services;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
@@ -9,7 +10,7 @@ public class StatusService {
     private boolean slackWorking = false;
     private boolean driveWorking = false;
 
-    private List<String> errors;
+    private List<String> errors = new ArrayList<>();
 
     public boolean getOverallStatus() {
         return slackWorking && driveWorking;

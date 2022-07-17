@@ -5,6 +5,8 @@ import io.quarkus.scheduler.Scheduled;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 @ApplicationScoped
 public class Scheduler {
@@ -15,8 +17,8 @@ public class Scheduler {
     /**
      * alle X Sekunden, kein Gleichzeitiges ausführen ("überlappen")
      */
-    @Scheduled(every = "5s", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
-    public void syncProxy(){
+    @Scheduled(every = "50900s", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    public void syncProxy() throws GeneralSecurityException, IOException {
         proxyUploaderService.uploadProxies();
     }
 

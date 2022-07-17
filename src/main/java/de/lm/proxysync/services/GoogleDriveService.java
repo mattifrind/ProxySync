@@ -23,11 +23,13 @@ import io.quarkus.runtime.StartupEvent;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,8 +51,10 @@ public class GoogleDriveService {
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
-    private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_METADATA_READONLY);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials/credentials.json";
+    private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_FILE);
+    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+
+    private static final String ROOT_FOLDER_ID = "1K2wBvCt5XooMV63ER9hTbqLpd1238vW7";
 
     /**
      * Creates an authorized Credential object.
@@ -85,8 +89,19 @@ public class GoogleDriveService {
                 .setApplicationName(APPLICATION_NAME)
                 .build();
         statusService.setDriveWorking(true);
+        /*
+        String projectFolderId = createDir(service, "Testprojekt", ROOT_FOLDER_ID);
+        String proxiesFolderId = createDir(service, "Proxies", projectFolderId);
+        java.io.File movFile = new java.io.File("D:\\Videos\\ProxySyncTestOrdner\\Projekt Full\\Proxy\\Untitled00007893.mov");
+        uploadVideoFile(service, proxiesFolderId, movFile);
+        uploadVideoFile(service, projectFolderId, movFile);*/
 
-        // Print the names and IDs for up to 10 files.
+        System.out.println(folderExists(ROOT_FOLDER_ID, "Laufende Projekte", service));
+
+        System.out.println("Test Finished");
+    }
+
+    private void listFiles(Drive service) throws IOException {
         FileList result = service.files().list()
                 .setPageSize(10)
                 .setFields("nextPageToken, files(id, name)")
@@ -95,45 +110,74 @@ public class GoogleDriveService {
         if (files == null || files.isEmpty()) {
             System.out.println("No files found.");
         } else {
-            System.out.println("Files:");
+            System.out.println("\n\n--------------------------------------------\nFiles:");
             for (File file : files) {
                 System.out.printf("%s (%s)\n", file.getName(), file.getId());
             }
+            System.out.println("-------------------FINISHED----------------------------------------");
         }
     }
 
-    public void uploadBasic() throws IOException, GeneralSecurityException {
-        // Load pre-authorized user credentials from the environment.
-        // TODO(developer) - See https://developers.google.com/identity for
-        // guides on implementing OAuth2 for your application.
-
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Drive service = new Drive.Builder(HTTP_TRANSPORT,
-                JSON_FACTORY,
-                getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-
-
-        // Upload file photo.jpg on drive.
+    private void uploadVideoFile(Drive service, String folderId, java.io.File file) throws IOException {
         File fileMetadata = new File();
-        fileMetadata.setName("rothograpf.jpg");
-        // File's content.
-        java.io.File filePath = new java.io.File("D:\\Downloads\\rothograpf.jpeg");
+        fileMetadata.setName(file.getName());
+        fileMetadata.setParents(Collections.singletonList(folderId));
         // Specify media type and file-path for file.
-        FileContent mediaContent = new FileContent("image/jpeg", filePath);
+        FileContent mediaContent = new FileContent("video/mov", file);
         try {
-            File file = service.files().create(fileMetadata, mediaContent)
+            File uploadFile = service.files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute();
-            System.out.println("File ID: " + file.getId());
-            //return file.getId();
-            return;
+            System.out.println("File ID: " + uploadFile.getId());
         }catch (GoogleJsonResponseException e) {
             // TODO(developer) - handle error appropriately
             System.err.println("Unable to upload file: " + e.getDetails());
             throw e;
         }
+    }
+
+    private String createDir(Drive service, String folderName, String parentFolderId) throws IOException{
+        File fileMetadata = new File();
+        fileMetadata.setName(folderName);
+        fileMetadata.setParents(Collections.singletonList(parentFolderId));
+        fileMetadata.setMimeType("application/vnd.google-apps.folder");
+        try {
+            File file = service.files().create(fileMetadata)
+                    .setFields("id")
+                    .execute();
+            System.out.println("Folder ID: " + file.getId());
+            return file.getId();
+        }catch (GoogleJsonResponseException e) {
+            // TODO(developer) - handle error appropriately
+            System.err.println("Unable to create folder: " + e.getDetails());
+            throw e;
+        }
+    }
+
+    private boolean folderExists(String parentFolderId, String foldername, Drive service) throws IOException {
+
+        List<File> files = new ArrayList<>();
+
+        String pageToken = null;
+        do {
+            FileList result = service.files().list().setQ("mimeType = 'application/vnd.google-apps.folder'")
+                    .execute();
+            for (File file : result.getFiles()) {
+                System.out.printf("Found file: %s (%s)\n",
+                        file.getName(), file.getId());
+            }
+
+            files.addAll(result.getFiles());
+
+            pageToken = result.getNextPageToken();
+        } while (pageToken != null);
+
+
+        for(File f : files){
+            if(f.getName().equals(foldername))
+                return true;
+        }
+        return false;
     }
 
 
